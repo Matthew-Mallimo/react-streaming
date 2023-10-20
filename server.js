@@ -14,9 +14,22 @@ const Comp = () => {
     </div>
   )
 }
+const Header = () => {
+  use(new Promise((resolve) => {
+    setTimeout(() => resolve(), 500)
+  }))
+  return (
+    <div>
+      <h1>Header</h1>
+    </div>
+  )
+}
 
 const App = () => (
   <div>
+    <Suspense fallback={<h1>Loading Header</h1>}>
+      <Header />
+    </Suspense>
     <h1>Hello!!</h1>
     <Suspense fallback={<p>Loading...</p>}>
       <Comp />
