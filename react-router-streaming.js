@@ -1,6 +1,6 @@
 import React, { use, Suspense } from 'react';
 import { renderToPipeableStream } from 'react-dom/server';
-import { Await, defer, useLoaderData } from 'react-router-dom';
+import { Await, defer, useLoaderData, Outlet } from 'react-router-dom';
 import {
   createStaticHandler,
   createStaticRouter,
@@ -43,11 +43,31 @@ const App = () => {
       <h1>Hello!!</h1>
       <Suspense fallback={<p>Loading data...</p>}>
         <Await resolve={data}>
-          {(data) => (
-            <code>{JSON.stringify(data)}</code>
+          {(d) => (
+            <code>{JSON.stringify(d)}</code>
           )}
         </Await>
         </Suspense>
+        <Outlet />
+    </div>
+  )
+}
+
+const Child = () => {
+  const {data} = useLoaderData();
+  return (
+    <div>
+      <h2>Child</h2>
+      <Suspense fallback={<p>Loading data...</p>}>
+        <Await resolve={data}>
+          {(d) => (
+          <div>
+            <h1>Child</h1>
+            <code>{JSON.stringify(d)}</code>
+          </div>
+          )}
+        </Await>
+      </Suspense>
     </div>
   )
 }
@@ -56,6 +76,7 @@ const routes = [
   {
     path: "/",
     loader: async () => {
+      console.log('parent')
       const x = new Promise((res) => {
         setTimeout(() => res({ hello: 'world', goodbye: 'world' }), 1000)
       })
@@ -65,13 +86,29 @@ const routes = [
       })
     },
     Component: App,
+    children: [
+      {
+        element: <Child />,
+        path: "hello",
+        loader: async () => {
+          console.log('child')
+          const x = new Promise((res) => {
+            setTimeout(() => res({ stuff: 'world', cool: 'world' }), 500)
+          })
+    
+          return defer({
+            data: x,
+          })
+        },
+      },
+    ]
   },
 ];
 
 let handler = createStaticHandler(routes);
 
 
-app.get('/', async (request, response) => {
+app.get('*', async (request, response) => {
   let fetchRequest = createFetchRequest(request);
   let context = await handler.query(fetchRequest);
   let router = createStaticRouter(

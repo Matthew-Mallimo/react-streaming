@@ -1,2 +1,2 @@
 require('@babel/register')
-require('./react-router-streaming.js')
+require('./react-router-ssr.js')

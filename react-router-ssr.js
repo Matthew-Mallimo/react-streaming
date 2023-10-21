@@ -1,6 +1,6 @@
 import React, { use, Suspense } from 'react';
 import { renderToPipeableStream } from 'react-dom/server';
-import { json, useLoaderData } from 'react-router-dom';
+import { Outlet, json, useLoaderData } from 'react-router-dom';
 import {
   createStaticHandler,
   createStaticRouter,
@@ -42,6 +42,16 @@ const App = () => {
     <div>
       <h1>Hello!!</h1>
       <code>{JSON.stringify(data)}</code>
+      <Outlet />
+    </div>
+  )
+}
+const Child = () => {
+  const data = useLoaderData();
+  return (
+    <div>
+      <h1>Child</h1>
+      <code>{JSON.stringify(data)}</code>
     </div>
   )
 }
@@ -57,13 +67,22 @@ const routes = [
       return json(x)
     },
     Component: App,
+    children: [
+      {
+        element: <Child />,
+        path: "hello",
+        loader: async () => {
+          return json({ stuff: 'world', cool: 'world' })
+        },
+      },
+    ]
   },
 ];
 
 let handler = createStaticHandler(routes);
 
 
-app.get('/', async (request, response) => {
+app.get('*', async (request, response) => {
   let fetchRequest = createFetchRequest(request);
   let context = await handler.query(fetchRequest);
   let router = createStaticRouter(
